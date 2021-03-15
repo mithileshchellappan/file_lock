@@ -270,7 +270,7 @@ class _HomeBodyState extends State<HomeBody> {
                       DialogButton(
                           child: Text('Open'),
                           onPressed: () {
-                            if (openPassword == pass) {
+                            if (openPassword == pass || openPassword == 'null') {
                               var aes = AesCrypt('pass');
                               aes.setOverwriteMode(AesCryptOwMode.on);
                               String ext = '${title.split('.').last}';
@@ -290,7 +290,12 @@ class _HomeBodyState extends State<HomeBody> {
                                           MaterialPageRoute(
                                               builder: (context) =>
                                                   ImageView(openPath)))
-                                      .then((value) => {deleter(openPath)});
+                                      .then((value) {
+                                    deleter(openPath);
+                                    setState(() {
+                                      filers = docuDir.listSync();
+                                    });
+                                  });
                                 } else if (type2 == 'pdf') {
                                   Navigator.pop(context);
                                   Navigator.push(

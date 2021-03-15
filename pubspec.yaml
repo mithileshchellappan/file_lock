@@ -42,6 +42,7 @@ dependencies:
   multi_select_item:
   rflutter_alert:
   hive: 
+  advance_pdf_viewer:
 
 
 dev_dependencies:
