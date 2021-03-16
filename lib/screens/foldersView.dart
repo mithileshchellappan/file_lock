@@ -22,6 +22,7 @@ List<Directory> directory;
 Directory dir = Directory('/storage/emulated/0');
 Directory docuDir;
 String openPassword = '';
+ScrollController scrollController = ScrollController();
 
 class FolderView extends StatefulWidget {
   @override
@@ -31,13 +32,16 @@ class FolderView extends StatefulWidget {
 final controller = new MultiSelectController();
 
 class _FolderViewState extends State<FolderView> {
+  bool isExpanded = true;
   var openBox;
+
   @override
   void initState() {
     openHiveBox();
     var box = Hive.box('box');
     controller.disableEditingWhenNoneSelected = true;
     controller.set(filers.length);
+
     listOfFiles();
     super.initState();
   }
@@ -77,76 +81,21 @@ class _FolderViewState extends State<FolderView> {
         child: Scaffold(
             floatingActionButton: FloatingActionButton.extended(
               onPressed: () async {
-                var crypt = AesCrypt('pass');
-                crypt.setOverwriteMode(AesCryptOwMode.on);
-                if (!await docuDir.exists()) {
-                  docuDir = await createDir();
-                }
-                String result = await FilesystemPicker.open(
-                    title: 'Choose file to encrypt',
-                    context: context,
-                    rootDirectory: dir,
-                    allowedExtensions: ['.jpg', '.png', '.pdf', '.txt'],
-                    fsType: FilesystemType.file);
-                if (result != null) {
-                  print(result);
-
-                  Alert(
-                      context: context,
-                      title: 'Set Password',
-                      content: Column(
-                        children: [
-                          TextField(
-                            controller: textEditingController,
-                            onChanged: (val) {
-                              setState(() {
-                                password = val;
-                              });
-                            },
-                          ),
-                          DialogButton(
-                              child: Text('Submit'),
-                              onPressed: () async {
-                                if (password != '') {
-                                  File file = File(result);
-                                  String rootDir = file.parent.path;
-                                  print('root dir $rootDir');
-                                  String fileName = file.path.split('/').last;
-                                  print(fileName);
-                                  //crypt.encryptFileSync(result,'${docuDir.toString()}/$fileName');
-                                  setState(() {
-                                    isLoading = true;
-                                  });
-                                  File file2 = await File('$rootDir/$fileName')
-                                      .rename('${docuDir.path}/$fileName');
-
-                                  var box = Hive.box('box');
-                                  box.put('$fileName.aes', password);
-                                  print('fn $fileName');
-                                  print(box.get(fileName));
-
-                                  crypt.encryptFileSync(
-                                      '${docuDir.path}/$fileName');
-                                  await File('${docuDir.path}/$fileName')
-                                      .delete();
-
-                                  setState(() {
-                                    isLoading = false;
-                                    filers = docuDir.listSync();
-                                  });
-                                  textEditingController.clear();
-                                  Navigator.pop(context);
-                                }
-                              })
-                        ],
-                      )).show();
-                }
+                addFile();
               },
               label: Text('Add New File'),
               icon: Icon(Icons.add),
               isExtended: true,
             ),
-            body: isLoading ? CircularProgressIndicator() : HomeBody(),
+            body: filers.isEmpty
+                ? Center(
+                    child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                        Image.asset('Capture.gif'),
+                        Text('There is nothing over here!',style:TextStyle(fontSize: 18.0,fontWeight: FontWeight.bold),),
+                      ]))
+                : HomeBody(),
             appBar: AppBar(
                 actions: [
                   FlatButton(
@@ -165,6 +114,73 @@ class _FolderViewState extends State<FolderView> {
                 centerTitle: true,
                 title: Text('Your Files'))),
         onWillPop: () async => false);
+  }
+
+  void addFile() async {
+    var crypt = AesCrypt('pass');
+    crypt.setOverwriteMode(AesCryptOwMode.on);
+    if (!await docuDir.exists()) {
+      docuDir = await createDir();
+    }
+    String result = await FilesystemPicker.open(
+        title: 'Choose file to encrypt',
+        context: context,
+        rootDirectory: dir,
+        allowedExtensions: ['.jpg', '.png', '.pdf', '.txt'],
+        fsType: FilesystemType.file);
+    if (result != null) {
+      print(result);
+
+      Alert(
+          context: context,
+          title: 'Set Password',
+          buttons: [
+            DialogButton(
+                child: Text('Submit', style: TextStyle(color: Colors.white)),
+                onPressed: () async {
+                  if (password != '') {
+                    File file = File(result);
+                    String rootDir = file.parent.path;
+                    print('root dir $rootDir');
+                    String fileName = file.path.split('/').last;
+                    print(fileName);
+                    //crypt.encryptFileSync(result,'${docuDir.toString()}/$fileName');
+                    setState(() {
+                      isLoading = true;
+                    });
+                    File file2 = await File('$rootDir/$fileName')
+                        .rename('${docuDir.path}/$fileName');
+
+                    var box = Hive.box('box');
+                    box.put('$fileName.aes', password);
+                    print('fn $fileName');
+                    print(box.get(fileName));
+
+                    crypt.encryptFileSync('${docuDir.path}/$fileName');
+                    await File('${docuDir.path}/$fileName').delete();
+
+                    setState(() {
+                      isLoading = false;
+                      filers = docuDir.listSync();
+                    });
+                    textEditingController.clear();
+                    Navigator.pop(context);
+                  }
+                })
+          ],
+          content: Column(
+            children: [
+              TextField(
+                controller: textEditingController,
+                onChanged: (val) {
+                  setState(() {
+                    password = val;
+                  });
+                },
+              ),
+            ],
+          )).show();
+    }
   }
 
   Future<Directory> createDir() async {
@@ -186,7 +202,7 @@ class _HomeBodyState extends State<HomeBody> {
       children: [
         Expanded(
             child: GridView.builder(
-                controller: ScrollController(),
+                controller: scrollController,
                 gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2),
                 itemCount: filers.length,
@@ -241,6 +257,7 @@ class _HomeBodyState extends State<HomeBody> {
                       setState(() {
                         filers = docuDir.listSync();
                       });
+                      Navigator.pop(context);
                     },
                   ),
                   DialogButton(
@@ -258,6 +275,58 @@ class _HomeBodyState extends State<HomeBody> {
               Alert(
                   context: context,
                   title: 'Enter password to open file',
+                  buttons: [
+                    DialogButton(
+                        child:
+                            Text('OPEN', style: TextStyle(color: Colors.white)),
+                        onPressed: () {
+                          if (openPassword == pass || openPassword == 'null') {
+                            var aes = AesCrypt('pass');
+                            aes.setOverwriteMode(AesCryptOwMode.on);
+                            String ext = '${title.split('.').last}';
+                            print(ext);
+                            if (ext == 'aes') {
+                              print('inside if');
+                              String openPath = aes.decryptFileSync(path);
+                              String type = openPath.split('/').last;
+                              String type2 = type.split('.').last;
+                              print(type2 + 'type');
+                              if (type2 == 'png' ||
+                                  type2 == 'jpeg' ||
+                                  type2 == 'jpg') {
+                                Navigator.pop(context);
+                                Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) =>
+                                            ImageView(openPath))).then((value) {
+                                  deleter(openPath);
+                                  setState(() {
+                                    filers = docuDir.listSync();
+                                  });
+                                });
+                              } else if (type2 == 'pdf') {
+                                Navigator.pop(context);
+                                Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) =>
+                                            PdfView(openPath))).then((value) {
+                                  deleter(openPath);
+                                  setState(() {
+                                    filers = docuDir.listSync();
+                                  });
+                                });
+                              }
+                            }
+                          } else {
+                            Scaffold.of(context).showSnackBar(SnackBar(
+                              content: Text('Wrong Password'),
+                            ));
+                            Navigator.pop(context);
+                          }
+                        })
+                  ],
                   content: Column(
                     children: [
                       TextField(
@@ -267,56 +336,6 @@ class _HomeBodyState extends State<HomeBody> {
                           });
                         },
                       ),
-                      DialogButton(
-                          child: Text('Open'),
-                          onPressed: () {
-                            if (openPassword == pass || openPassword == 'null') {
-                              var aes = AesCrypt('pass');
-                              aes.setOverwriteMode(AesCryptOwMode.on);
-                              String ext = '${title.split('.').last}';
-                              print(ext);
-                              if (ext == 'aes') {
-                                print('inside if');
-                                String openPath = aes.decryptFileSync(path);
-                                String type = openPath.split('/').last;
-                                String type2 = type.split('.').last;
-                                print(type2 + 'type');
-                                if (type2 == 'png' ||
-                                    type2 == 'jpeg' ||
-                                    type2 == 'jpg') {
-                                  Navigator.pop(context);
-                                  Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                              builder: (context) =>
-                                                  ImageView(openPath)))
-                                      .then((value) {
-                                    deleter(openPath);
-                                    setState(() {
-                                      filers = docuDir.listSync();
-                                    });
-                                  });
-                                } else if (type2 == 'pdf') {
-                                  Navigator.pop(context);
-                                  Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                          builder: (context) =>
-                                              PdfView(openPath))).then((value) {
-                                    deleter(openPath);
-                                    setState(() {
-                                      filers = docuDir.listSync();
-                                    });
-                                  });
-                                }
-                              }
-                            } else {
-                              Scaffold.of(context).showSnackBar(SnackBar(
-                                content: Text('Wrong Password'),
-                              ));
-                              Navigator.pop(context);
-                            }
-                          })
                     ],
                   )).show();
 

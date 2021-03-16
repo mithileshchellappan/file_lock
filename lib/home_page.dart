@@ -1,3 +1,4 @@
+import 'package:file_lock/screens/login.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'createPattern.dart';
@@ -37,7 +38,7 @@ class HomePage extends StatelessWidget {
                               onPressed: () => Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                      builder: (context) => CreatePattern())),
+                                      builder: (context) => LoginScreen())),
                             )
                           : ElevatedButton(
                               child: Text(
