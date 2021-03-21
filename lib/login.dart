@@ -1,13 +1,20 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:file_lock/screens/foldersView.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_email_sender/flutter_email_sender.dart';
+import 'package:hive/hive.dart';
+import 'package:rflutter_alert/rflutter_alert.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'summa.dart';
 import 'themes.dart';
 import 'triangle.dart';
 import 'circle.dart';
 import 'package:collection/collection.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 enum ShapeState { Blank, Circle, Rectangle, Triangle }
 
@@ -16,7 +23,10 @@ class Login extends StatefulWidget {
   _LoginState createState() => _LoginState();
 }
 
+User loggedInUser;
+
 class _LoginState extends State<Login> with TickerProviderStateMixin {
+  final _auth = FirebaseAuth.instance;
   var activeShape = ShapeState.Circle;
   var shapeState = ShapeState.Blank;
   var boardState = List<List<ShapeState>>.generate(
@@ -31,6 +41,7 @@ class _LoginState extends State<Login> with TickerProviderStateMixin {
 
   @override
   void initState() {
+    getCurrentUser();
     getPattern();
     _boardController = AnimationController(
       duration: Duration(milliseconds: 300),
@@ -44,6 +55,18 @@ class _LoginState extends State<Login> with TickerProviderStateMixin {
         });
       });
     super.initState();
+  }
+
+  void getCurrentUser() async {
+    try {
+      final user = _auth.currentUser;
+      if (user != null) {
+        loggedInUser = user;
+        print(loggedInUser.email);
+      }
+    } catch (e) {
+      print(e);
+    }
   }
 
   @override
@@ -72,9 +95,10 @@ class _LoginState extends State<Login> with TickerProviderStateMixin {
           backgroundColor: Colors.white,
           floatingActionButton: FloatingActionButton(
             onPressed: () {
-              removePattern();
+              // removePattern();
+              //reset();
             },
-            child: Icon(Icons.delete),
+            child: Icon(Icons.cached),
           ),
           body: Column(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -96,7 +120,7 @@ class _LoginState extends State<Login> with TickerProviderStateMixin {
                   shapeStateDisplay,
                 ],
               ),
-              bottomBar,
+              forgotPassword,
             ],
           )),
     );
@@ -222,6 +246,70 @@ class _LoginState extends State<Login> with TickerProviderStateMixin {
           backgroundColor: accentColor,
           mini: true,
           onPressed: () => reset(),
+        ),
+      );
+  Widget get forgotPassword => Padding(
+        padding: const EdgeInsets.only(bottom: 32.0),
+        child: RaisedButton(
+          child: Container(
+            child: Text('Forgot Pattern?'),
+          ),
+          onPressed: () async {
+            try {
+              //await _auth.sendPasswordResetEmail(email: loggedInUser.email);
+              var box = Hive.box('creds');
+              String email = box.get('email');
+              String pass = box.get('pass');
+              String enterEmail = '';
+              String enterPass = '';
+              int min = 100000; //min and max values act as your 6 digit range
+              int max = 999999;
+              var randomizer = new Random();
+              var rNum = min + randomizer.nextInt(max - min);
+              Alert(
+                  context: context,
+                  title: 'Enter your login email and password',
+                  content: Column(
+                    children: [
+                      TextField(
+                          keyboardType: TextInputType.emailAddress,
+                          onChanged: (val) {
+                            setState(() {
+                              enterEmail = val;
+                            });
+                          }),
+                      TextField(
+                        keyboardType: TextInputType.visiblePassword,
+                        obscureText: true,
+                        onChanged: (val) {
+                          setState(() {
+                            enterPass = val;
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                  buttons: [
+                    DialogButton(
+                        child: Text('Submit'),
+                        onPressed: () async {
+                          if (enterEmail != null && enterPass != null) {
+                            if (enterEmail == email && enterPass == pass) {
+                              final Email email = Email(
+                                body:'Your recovery code for File Lock app is $rNum',
+                                subject: 'Forgot Pattern in File Lock app'
+                              );
+                              print(rNum);
+                              
+                              await FlutterEmailSender.send(email); 
+                            }
+                          }
+                        })
+                  ]).show();
+            } catch (e) {
+              print(e);
+            }
+          },
         ),
       );
 

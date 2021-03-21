@@ -43,6 +43,11 @@ dependencies:
   rflutter_alert:
   hive: 
   advance_pdf_viewer:
+  firebase_core: 
+  firebase_auth: 
+  cloud_firestore: 
+  provider:
+  flutter_email_sender: 
 
 
 dev_dependencies:
