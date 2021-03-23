@@ -82,14 +82,8 @@ class _FolderViewState extends State<FolderView> {
         child: Scaffold(
             floatingActionButton: FloatingActionButton.extended(
               onPressed: () async {
-                // addFile();
-                String result;
-      FlutterDocumentPickerParams params = FlutterDocumentPickerParams(
-        
-      );
-
-      result = await FlutterDocumentPicker.openDocument(params: params);
-      print(result);
+                addFile();
+                
               },
               label: Text('Add New File'),
               icon: Icon(Icons.add),
