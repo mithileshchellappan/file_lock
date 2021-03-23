@@ -16,6 +16,7 @@ import 'package:path_provider_ex/path_provider_ex.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:rflutter_alert/rflutter_alert.dart';
+import 'package:flutter_document_picker/flutter_document_picker.dart';
 
 List filers = new List();
 List<Directory> directory;
@@ -81,7 +82,14 @@ class _FolderViewState extends State<FolderView> {
         child: Scaffold(
             floatingActionButton: FloatingActionButton.extended(
               onPressed: () async {
-                addFile();
+                // addFile();
+                String result;
+      FlutterDocumentPickerParams params = FlutterDocumentPickerParams(
+        
+      );
+
+      result = await FlutterDocumentPicker.openDocument(params: params);
+      print(result);
               },
               label: Text('Add New File'),
               icon: Icon(Icons.add),
@@ -98,7 +106,7 @@ class _FolderViewState extends State<FolderView> {
                 : HomeBody(),
             appBar: AppBar(
                 actions: [
-                  FlatButton(
+                  TextButton(
                     child: Icon(
                       Icons.refresh,
                       color: Colors.white,
@@ -115,6 +123,7 @@ class _FolderViewState extends State<FolderView> {
                 title: Text('Your Files'))),
         onWillPop: () async => false);
   }
+  
 
   void addFile() async {
     var crypt = AesCrypt('pass');

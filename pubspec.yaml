@@ -48,7 +48,8 @@ dependencies:
   cloud_firestore: 
   provider:
   flutter_email_sender: 
-
+  flutter_document_picker:
+  dio:
 
 dev_dependencies:
   flutter_test:

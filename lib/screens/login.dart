@@ -74,15 +74,12 @@ class _LoginScreenState extends State<LoginScreen> {
       builder: (
         context,
       ) {
-        return RaisedButton(
+        return ElevatedButton(
           child: Text('Login'),
-          color: Colors.blue,
           onPressed: (password.isNotEmpty && emailId.isNotEmpty)
               ? () async {
                   print(password + emailId);
                   try {
-                    await firebaseAuth.createUserWithEmailAndPassword(
-                        email: emailId, password: password);
                     var box = Hive.box('creds');
                     box.put('email', emailId);
                     box.put('pass', password);

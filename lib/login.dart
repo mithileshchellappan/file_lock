@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:dio/dio.dart';
+import 'package:file_lock/createPattern.dart';
 import 'package:file_lock/screens/foldersView.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
@@ -96,7 +98,7 @@ class _LoginState extends State<Login> with TickerProviderStateMixin {
           floatingActionButton: FloatingActionButton(
             onPressed: () {
               // removePattern();
-              //reset();
+              reset();
             },
             child: Icon(Icons.cached),
           ),
@@ -250,59 +252,57 @@ class _LoginState extends State<Login> with TickerProviderStateMixin {
       );
   Widget get forgotPassword => Padding(
         padding: const EdgeInsets.only(bottom: 32.0),
-        child: RaisedButton(
+        child: ElevatedButton(
           child: Container(
             child: Text('Forgot Pattern?'),
           ),
           onPressed: () async {
             try {
               //await _auth.sendPasswordResetEmail(email: loggedInUser.email);
-              var box = Hive.box('creds');
-              String email = box.get('email');
-              String pass = box.get('pass');
-              String enterEmail = '';
-              String enterPass = '';
               int min = 100000; //min and max values act as your 6 digit range
               int max = 999999;
+              var box = Hive.box('creds');
+              String email = box.get('email');
               var randomizer = new Random();
               var rNum = min + randomizer.nextInt(max - min);
+              FormData formData =
+                  new FormData.fromMap({"rmail": email, "otp": rNum});
+              Response status = await Dio().post(
+                  'http://tracking.pro-z.in/mailcheck-api/recovery/',
+                  data: formData);
+              print(status);
+              String pass = box.get('pass');
+              String enterEmail = '';
+              String otp = '';
+              String enterPass = '';
+
               Alert(
                   context: context,
-                  title: 'Enter your login email and password',
+                  title:
+                      'Enter OTP you have received in your registered email.',
                   content: Column(
                     children: [
                       TextField(
-                          keyboardType: TextInputType.emailAddress,
+                        textAlign: TextAlign.center,
+                          keyboardType: TextInputType.number,
                           onChanged: (val) {
                             setState(() {
-                              enterEmail = val;
+                              otp = val;
                             });
                           }),
-                      TextField(
-                        keyboardType: TextInputType.visiblePassword,
-                        obscureText: true,
-                        onChanged: (val) {
-                          setState(() {
-                            enterPass = val;
-                          });
-                        },
-                      ),
                     ],
                   ),
                   buttons: [
                     DialogButton(
                         child: Text('Submit'),
                         onPressed: () async {
-                          if (enterEmail != null && enterPass != null) {
-                            if (enterEmail == email && enterPass == pass) {
-                              final Email email = Email(
-                                body:'Your recovery code for File Lock app is $rNum',
-                                subject: 'Forgot Pattern in File Lock app'
-                              );
-                              print(rNum);
-                              
-                              await FlutterEmailSender.send(email); 
-                            }
+                          if (otp == rNum.toString()) {
+                            removePattern();
+                            Navigator.pop(context);
+                            Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => CreatePattern()));
                           }
                         })
                   ]).show();
