@@ -5,11 +5,8 @@ import 'package:aes_crypt/aes_crypt.dart';
 import 'package:file_lock/screens/imageView.dart';
 import 'package:file_lock/screens/pdfViewe.dart';
 import 'package:filesystem_picker/filesystem_picker.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
-import 'package:mime/mime.dart';
-import 'package:multi_select_item/multi_select_item.dart';
 import 'package:open_file/open_file.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path_provider_ex/path_provider_ex.dart';
@@ -30,7 +27,6 @@ class FolderView extends StatefulWidget {
   _FolderViewState createState() => _FolderViewState();
 }
 
-final controller = new MultiSelectController();
 
 class _FolderViewState extends State<FolderView> {
   bool isExpanded = true;
@@ -40,8 +36,6 @@ class _FolderViewState extends State<FolderView> {
   void initState() {
     openHiveBox();
     var box = Hive.box('box');
-    controller.disableEditingWhenNoneSelected = true;
-    controller.set(filers.length);
 
     listOfFiles();
     super.initState();
@@ -83,7 +77,6 @@ class _FolderViewState extends State<FolderView> {
             floatingActionButton: FloatingActionButton.extended(
               onPressed: () async {
                 addFile();
-                
               },
               label: Text('Add New File'),
               icon: Icon(Icons.add),
@@ -95,7 +88,11 @@ class _FolderViewState extends State<FolderView> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                         Image.asset('Capture.gif'),
-                        Text('There is nothing over here!',style:TextStyle(fontSize: 18.0,fontWeight: FontWeight.bold),),
+                        Text(
+                          'There is nothing over here!',
+                          style: TextStyle(
+                              fontSize: 18.0, fontWeight: FontWeight.bold),
+                        ),
                       ]))
                 : HomeBody(),
             appBar: AppBar(
@@ -117,7 +114,6 @@ class _FolderViewState extends State<FolderView> {
                 title: Text('Your Files'))),
         onWillPop: () async => false);
   }
-  
 
   void addFile() async {
     var crypt = AesCrypt('pass');
@@ -125,11 +121,12 @@ class _FolderViewState extends State<FolderView> {
     if (!await docuDir.exists()) {
       docuDir = await createDir();
     }
+
     String result = await FilesystemPicker.open(
         title: 'Choose file to encrypt',
         context: context,
         rootDirectory: dir,
-        allowedExtensions: ['.jpg', '.png', '.pdf', '.txt'],
+        allowedExtensions: ['.jpg', '.png', '.pdf', '.txt', '.jpeg'],
         fsType: FilesystemType.file);
     if (result != null) {
       print(result);
@@ -174,6 +171,7 @@ class _FolderViewState extends State<FolderView> {
           content: Column(
             children: [
               TextField(
+                textAlign: TextAlign.center,
                 controller: textEditingController,
                 onChanged: (val) {
                   setState(() {
@@ -238,8 +236,7 @@ class _HomeBodyState extends State<HomeBody> {
         decoration: BoxDecoration(
             color: Colors.blue.shade100,
             borderRadius: BorderRadius.circular(20)),
-        child: Expanded(
-          child: FlatButton(
+        child: GestureDetector(
             onLongPress: () {
               Alert(
                 type: AlertType.warning,
@@ -272,7 +269,7 @@ class _HomeBodyState extends State<HomeBody> {
                 ],
               ).show();
             },
-            onPressed: () async {
+            onTap: () async {
               var box = Hive.box('box');
               String pass = box.get(title);
               Alert(
@@ -333,6 +330,7 @@ class _HomeBodyState extends State<HomeBody> {
                   content: Column(
                     children: [
                       TextField(
+                        textAlign: TextAlign.center,
                         onChanged: (val) {
                           setState(() {
                             openPassword = val;
@@ -367,6 +365,6 @@ class _HomeBodyState extends State<HomeBody> {
                   }
                 })),
           ),
-        ));
+        );
   }
 }

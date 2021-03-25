@@ -1,6 +1,5 @@
 import 'package:file_lock/createPattern.dart';
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:hive/hive.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -10,7 +9,6 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   String emailId = "";
-  FirebaseAuth firebaseAuth = FirebaseAuth.instance;
 
   String password = "";
 
@@ -79,7 +77,7 @@ class _LoginScreenState extends State<LoginScreen> {
           onPressed: (password.isNotEmpty && emailId.isNotEmpty)
               ? () async {
                   print(password + emailId);
-                  try {
+                  
                     var box = Hive.box('creds');
                     box.put('email', emailId);
                     box.put('pass', password);
@@ -88,10 +86,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         MaterialPageRoute(
                             builder: (context) => CreatePattern()));
                     return "Signed up";
-                  } on FirebaseAuthException catch (e) {
-                    return e.message;
-                  }
-                }
+              }
               : null,
         );
       },

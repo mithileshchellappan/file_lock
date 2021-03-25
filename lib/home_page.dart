@@ -31,7 +31,7 @@ class HomePage extends StatelessWidget {
                       child: pattern == null
                           ? ElevatedButton(
                               child: Text(
-                                'Create Pattern',
+                                'Register',
                                 style: TextStyle(
                                     color: Colors.white, fontSize: 20.0),
                               ),

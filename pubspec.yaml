@@ -39,19 +39,11 @@ dependencies:
   flutter_pdfview: 
   share:   
   shared_preferences:
-  multi_select_item:
   rflutter_alert:
   hive: 
-  advance_pdf_viewer:
-  firebase_core: 
-  firebase_auth: 
-  cloud_firestore: 
-  provider:
-  flutter_email_sender: 
   flutter_document_picker:
   dio:
   splashscreen:
-
 dev_dependencies:
   flutter_test:
     sdk: flutter

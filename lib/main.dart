@@ -4,7 +4,6 @@ import 'package:flutter/services.dart';
 
 import 'package:file_lock/home_page.dart';
 import 'package:hive/hive.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:path_provider/path_provider.dart';
 
 void main() async{
@@ -13,7 +12,6 @@ void main() async{
   Hive.init(direcotry.path);
   await Hive.openBox('box');
   await Hive.openBox('creds');
-  await Firebase.initializeApp();
   
   runApp(MyApp());
 }
